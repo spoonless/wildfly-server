@@ -1,2 +1,0 @@
-- name: activer Wildfly
-  systemd: daemon_reload=yes enabled=yes state=restarted name=wildfly

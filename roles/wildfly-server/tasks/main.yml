@@ -1,47 +1,55 @@
 - name: installation du jdk8
   package: name=openjdk-8-jdk-headless state=present
 
-- name: création du compte pour Wildfly
+- name: creation du compte pour Wildfly
   user:
     name: wildfly
     shell: /bin/false
     system: yes
     home: '{{wildfly_home}}'
 
+- name: telechargement de Wildfly
+  get_url:
+    url: '{{wildfly_url}}'
+    dest: '{{wildfly_archive}}'
+
 - name: installation de Wildfly
   unarchive:
-    src: '{{wildfly_url}}'
-    dest: '{{wildfly_home}}'
-    remote_src: True
-    extra_opts: "--strip-components=1"
+    src: '{{wildfly_archive}}'
+    dest: '{{wildfly_install_dir}}'
     creates: '{{wildfly_home}}/bin/domain.sh'
+    copy: no
     group: wildfly
     owner: wildfly
 
-- name: création des répertoires
+- name: creer un lien symbolique
+  file:
+    src: '{{wildfly_home}}'
+    dest: '/opt/wildfly'
+    state: link
+    group: wildfly
+    owner: wildfly
+
+- name: creation des répertoires
   file:
     path: '/etc/wildfly'
     state: directory
     owner: root
     group: root
 
-- name: création fichier pour installation du service
+- name: creation fichier pour installation du service
   copy:
     src: '{{wildfly_home}}/docs/contrib/scripts/systemd/wildfly.conf'
     dest: '/etc/wildfly/wildfly.conf'
     remote_src: true
-  notify:
-    - activer Wildfly
 
-- name: création fichier pour installation du service
+- name: creation fichier pour installation du service
   copy:
     src: '{{wildfly_home}}/docs/contrib/scripts/systemd/wildfly.service'
     dest: '/etc/systemd/system/wildfly.service'
     remote_src: true
-  notify:
-    - activer Wildfly
 
-- name: création fichier pour installation du service
+- name: creation fichier pour installation du service
   copy:
     src: '{{wildfly_home}}/docs/contrib/scripts/systemd/launch.sh'
     dest: '{{wildfly_home}}/bin/launch.sh'
@@ -49,8 +57,13 @@
     mode: 'a+x'
     owner: wildfly
     group: wildfly
-  notify:
-    - activer Wildfly
 
-- name: vérifier que Wildfly est actif
+- name: recharger les daemons
+  command: systemctl daemon-reload
+
+- name: activer le service wildfly
+  command: systemctl enable wildfly
+
+- name: verifier que Wildfly est actif
   service: state=started name=wildfly
+
