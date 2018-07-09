@@ -30,7 +30,7 @@
     group: wildfly
     owner: wildfly
 
-- name: creation des répertoires
+- name: creation des repertoires
   file:
     path: '/etc/wildfly'
     state: directory
